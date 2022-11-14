@@ -1,12 +1,13 @@
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
-
-import os
+import os, json, string
 
 bot = Bot(token=os.getenv('TOKEN'))
 
 dp = Dispatcher(bot)
+async def on_startup(_):
+    print('The bot has started.')
 # '_______________Client_place_______________'
 @dp.message_handler(commands=['start', 'help'])
 async def command_start(message : types.Message):
@@ -25,11 +26,11 @@ async def sushi_place_command(message : types.Message):
     await bot.send_message(message.from_user.id, 'бул. Александра Грина, 2, Санкт-Петербург')
 
 
-@dp.message_handler()
+@dp.message_handler() #Пустой handler должен быть в конце
 async def echo_send(message : types.Message):
-    if message.text == 'Привет!':
-        await message.answer('И тебе привет!')
-    # await message.reply(message.text)
-    # await bot.send_message(message.from_user.id, message.text)
+    if {i.lower().translate(str.maketrans('', '', string.punctuation)) for i in message.text.split(' ')} \
+        .intersection(set(json.load(open('censorsip.json')))): #Можно не пистать !='', потому что ''=False
+        await message.reply('Маты запрещены.')
+        await message.delete()
 
-executor.start_polling(dp, skip_updates=True)
+executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
